@@ -24,8 +24,29 @@ def close_connection(exception):
     if hasattr(g, "sqlite_db"):
         g.sqlite_db.close()
 
-# connect to html pages
+@app.before_first_request
+def init_db():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""CREATE TABLE IF NOT EXISTS cash(
+        transaction_id INTEGER PRIMARY KEY,
+        taiwanese_dollars INTEGER,
+        us_dollars REAL,
+        note VARCHAR(30),
+        date_info DATE
+    )""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS stock(
+        transaction_id INTEGER PRIMARY KEY,
+        stock_id VARCHAR(10),
+        stock_num INTEGER,
+        stock_price REAL,
+        processing_fee INTEGER,
+        tax INTEGER,
+        date_info DATE
+    )""")
+    conn.commit()
 
+# connect to html pages
 @app.route("/")
 def home():
     # get data info from database
@@ -190,4 +211,6 @@ def submit_stock():
     return "感謝提交表單。。。"
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
