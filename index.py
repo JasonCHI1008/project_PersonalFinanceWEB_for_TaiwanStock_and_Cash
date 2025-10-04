@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, g, redirect
 import sqlite3
-import requests
+import requests, certifi
 import math
 import matplotlib.pyplot as plt
 import matplotlib
@@ -8,9 +8,63 @@ import os
 from datetime import datetime
 matplotlib.use("agg")
 
+
 # Flask アプリケーションの「本体」を作成しています
 app = Flask(__name__,static_url_path='/static')
 database = "datafile.db"
+
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
+
+def make_session():
+    s = requests.Session()
+    retry = Retry(
+        total=3,
+        backoff_factor=0.4,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+        raise_on_status=False,
+    )
+    s.mount("https://", HTTPAdapter(max_retries=retry))
+    s.headers.update({
+        "User-Agent": "Mozilla/5.0",
+    })
+    return s
+
+SESSION = make_session()
+
+def safe_get_json(url, params=None, ref=None, timeout=8):
+    try:
+        headers = {}
+        if ref:
+            headers["Referer"] = ref
+        r = SESSION.get(
+            url, params=params, headers=headers,
+            timeout=timeout, verify=certifi.where()
+        )
+        r.raise_for_status()
+        return r.json()
+    except Exception as e:
+        app.logger.warning(f"[HTTP] GET fail: {url} params={params} err={e}")
+        return None
+
+# 為替
+fx = safe_get_json("https://tw.rter.info/capi.php")
+exrate = float(fx["USDTWD"]["Exrate"]) if fx and "USDTWD" in fx else 0.0
+currency = {"USDTWD": {"Exrate": exrate}}
+
+# TWSE
+from datetime import datetime
+def get_twse_prices(stock_no: str):
+    data = safe_get_json(
+        "https://www.twse.com.tw/exchangeReport/STOCK_DAY",
+        params={"response": "json", "stockNo": stock_no,
+                "date": datetime.now().strftime("%Y%m%d")},
+        ref="https://www.twse.com.tw/"
+    )
+    if not data or "data" not in data or not data["data"]:
+        return None
+    return data["data"]
 
 BASE_DIR = app.root_path  # プロジェクトのルートパス
 STATIC_DIR = os.path.join(BASE_DIR, "static")
@@ -80,9 +134,12 @@ def home():
     for data in cash_result:
         taiwanese_dollars += data[1]
         us_dollars += data[2]
-    # get exchange rate
-    r=requests.get('https://tw.rter.info/capi.php')
-    currency=r.json()
+    # get exchange rate safely
+    fx = safe_get_json("https://tw.rter.info/capi.php")
+    exrate = float(fx["USDTWD"]["Exrate"]) if fx and "USDTWD" in fx else 0.0
+    currency = {"USDTWD": {"Exrate": exrate}}
+
+    # calculate total NTD + USD*Exrate
     total = math.floor(taiwanese_dollars + us_dollars * currency["USDTWD"]["Exrate"])
     
     # get stock info
