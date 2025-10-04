@@ -8,7 +8,7 @@ import os
 matplotlib.use("agg")
 
 # Flask アプリケーションの「本体」を作成しています
-app = Flask(__name__)
+app = Flask(__name__,static_url_path='/static')
 database = "datafile.db"
 
 BASE_DIR = app.root_path  # プロジェクトのルートパス
@@ -35,6 +35,18 @@ def init_db():
             date_info DATE
         )""")
         conn.commit()
+
+def safe_get_json(url, params=None, timeout=6):
+    try:
+        r = requests.get(url, params=params, timeout=timeout, headers={
+            "User-Agent": "Mozilla/5.0"
+        })
+        r.raise_for_status()
+        return r.json()
+    except Exception as e:
+        app.logger.warning(f"[HTTP] GET fail: {url} params={params} err={e}")
+        return None
+
 
 # ← app を作った直後あたりで一度だけ実行
 with app.app_context():
@@ -157,7 +169,6 @@ def home():
             "show_pic_2":os.path.exists("static/piechart2.jpg"),
             "total":total, "currency":currency["USDTWD"]["Exrate"], "usd":us_dollars, "ntd":taiwanese_dollars,
             "cash_result":cash_result, "stock_info":stock_info }
-
 
     return render_template("index.html", data = data)
 

@@ -1,5 +1,5 @@
 {% extends "base.html" %} {% block content %}
-<form method="post" action="/cash">
+<form method="post" action="{{ url_for('submit_cash') }}">
   <div class="mb-3">
     <label for="taiwanese-dollars" class="form-label">台幣</label>
     <input
