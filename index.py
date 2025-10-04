@@ -11,6 +11,32 @@ matplotlib.use("agg")
 app = Flask(__name__)
 database = "datafile.db"
 
+def init_db():
+    # g を使わず、直接接続してテーブル作成するのが安全
+    with sqlite3.connect(database) as conn:
+        cur = conn.cursor()
+        cur.execute("""CREATE TABLE IF NOT EXISTS cash(
+            transaction_id INTEGER PRIMARY KEY,
+            taiwanese_dollars INTEGER,
+            us_dollars REAL,
+            note VARCHAR(30),
+            date_info DATE
+        )""")
+        cur.execute("""CREATE TABLE IF NOT EXISTS stock(
+            transaction_id INTEGER PRIMARY KEY,
+            stock_id VARCHAR(10),
+            stock_num INTEGER,
+            stock_price REAL,
+            processing_fee INTEGER,
+            tax INTEGER,
+            date_info DATE
+        )""")
+        conn.commit()
+
+# ← app を作った直後あたりで一度だけ実行
+with app.app_context():
+    init_db()
+    
 # Flaskアプリケーション内で、SQLiteデータベースへの接続を管理する処理
 def get_db():
     if not hasattr(g, "sqlite_db"):
@@ -23,28 +49,6 @@ def close_connection(exception):
     print("我們正在關閉sql connection....")
     if hasattr(g, "sqlite_db"):
         g.sqlite_db.close()
-
-@app.before_first_request
-def init_db():
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("""CREATE TABLE IF NOT EXISTS cash(
-        transaction_id INTEGER PRIMARY KEY,
-        taiwanese_dollars INTEGER,
-        us_dollars REAL,
-        note VARCHAR(30),
-        date_info DATE
-    )""")
-    cur.execute("""CREATE TABLE IF NOT EXISTS stock(
-        transaction_id INTEGER PRIMARY KEY,
-        stock_id VARCHAR(10),
-        stock_num INTEGER,
-        stock_price REAL,
-        processing_fee INTEGER,
-        tax INTEGER,
-        date_info DATE
-    )""")
-    conn.commit()
 
 # connect to html pages
 @app.route("/")
