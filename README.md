@@ -10,7 +10,7 @@ Track your cash balances (TWD/USD), stock investments, and visualize everything 
 
 ## 🚀 デモ / Demo
 
-> ※（Render や ngrok で公開した URL をここに入れてください）  
+> ※（Renderでサイトをデプロイします）  
 > [👉 サイトを見る / View the Site](https://your-app-name.onrender.com)
 
 ---
