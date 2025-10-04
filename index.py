@@ -11,6 +11,9 @@ matplotlib.use("agg")
 app = Flask(__name__)
 database = "datafile.db"
 
+BASE_DIR = app.root_path  # プロジェクトのルートパス
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+os.makedirs(STATIC_DIR, exist_ok=True)  # staticフォルダが無ければ作る
 def init_db():
     # g を使わず、直接接続してテーブル作成するのが安全
     with sqlite3.connect(database) as conn:
@@ -36,7 +39,7 @@ def init_db():
 # ← app を作った直後あたりで一度だけ実行
 with app.app_context():
     init_db()
-    
+
 # Flaskアプリケーション内で、SQLiteデータベースへの接続を管理する処理
 def get_db():
     if not hasattr(g, "sqlite_db"):
@@ -118,10 +121,16 @@ def home():
         fig, ax = plt.subplots(figsize=(6,5))
         ax.pie(sizes, labels=labels, autopct=None, shadow=None)
         fig.subplots_adjust(top=1, bottom=0, right=1, left=0,hspace=0, wspace=0)
-        plt.savefig("static/piechart.jpg", dpi=200)
+        
+
+        pie1_path = os.path.join(STATIC_DIR, "piechart.jpg")
+        plt.savefig(pie1_path, dpi=200)
+        plt.close(fig)  # 忘れずに閉じる
     else:
         try:
-            os.remove("static/piechart.jpg")
+            pie1_path = os.path.join(STATIC_DIR, "piechart.jpg")
+            if os.path.exists(pie1_path):
+                os.remove(pie1_path)
         except:
             pass
     # plot the pie chart of stock and cash
@@ -131,10 +140,16 @@ def home():
         fig, ax = plt.subplots(figsize=(6,5))
         ax.pie(sizes, labels=labels, autopct=None, shadow=None)
         fig.subplots_adjust(top=1, bottom=0, right=1, left=0,hspace=0, wspace=0)
-        plt.savefig("static/piechart2.jpg", dpi=200)
+        
+
+        pie2_path = os.path.join(STATIC_DIR, "piechart2.jpg")
+        plt.savefig(pie2_path, dpi=200)
+        plt.close(fig)
     else:
         try:
-            os.remove("static/piechart2.jpg")
+            pie2_path = os.path.join(STATIC_DIR, "piechart2.jpg")
+            if os.path.exists(pie2_path):
+                os.remove(pie2_path)
         except:
             pass
     
