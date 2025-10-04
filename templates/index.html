@@ -82,12 +82,20 @@
   {% if data["show_pic_1"] %}
   <figure style="flex: 0 1 500px; margin: 10px">
     <figcaption>股票庫存占比圖</figcaption>
-    <img style="width: 100%" src="/static/piechart.jpg" alt="股票庫存占比圖" />
+    <img
+      style="width: 100%"
+      src="{{ url_for('static', filename='piechart.jpg') }}"
+      alt="股票庫存占比圖"
+    />
   </figure>
   {% endif %} {% if data["show_pic_2"] %}
   <figure style="flex: 0 1 500px; margin: 10px">
     <figcaption>資產比列占比圖</figcaption>
-    <img style="width: 100%" src="/static/piechart2.jpg" alt="資產比列占比圖" />
+    <img
+      style="width: 100%"
+      src="{{ url_for('static', filename='piechart2.jpg') }}"
+      alt="資產比列占比圖"
+    />
   </figure>
   {% endif %}
 </div>
